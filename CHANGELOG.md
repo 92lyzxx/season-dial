@@ -30,4 +30,4 @@ First public release.
 - Right-click menu did not close when clicking outside the window.
 - Third caption line was clipped at the smallest window size.
 
-[1.0.0]: https://github.com/USERNAME/season-dial/releases/tag/v1.0.0
+[1.0.0]: https://github.com/92lyzxx/season-dial/releases/tag/v1.0.0

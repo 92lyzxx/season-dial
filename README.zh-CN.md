@@ -44,7 +44,7 @@
 
 ## 下载
 
-到 [Releases](https://github.com/USERNAME/season-dial/releases) 下载 `SeasonDial-1.0.0.exe`。
+到 [Releases](https://github.com/92lyzxx/season-dial/releases) 下载 `SeasonDial-1.0.0.exe`。
 
 单文件便携版，免安装、不需要管理员权限。因为未做代码签名，Windows 可能弹 SmartScreen：点「更多信息 → 仍要运行」。
 

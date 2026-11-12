@@ -44,7 +44,7 @@ Two independent cycles run at once:
 
 ## Download
 
-Grab the latest portable build from [Releases](https://github.com/USERNAME/season-dial/releases): `SeasonDial-1.0.0.exe`.
+Grab the latest portable build from [Releases](https://github.com/92lyzxx/season-dial/releases): `SeasonDial-1.0.0.exe`.
 
 It is a portable single-file build — no installer, no admin rights. Windows may show a SmartScreen warning because the binary is unsigned: *More information → Run anyway*.
 
