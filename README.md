@@ -14,7 +14,15 @@
   <a href="docs/manual.zh-CN.md">完整使用说明</a>
 </p>
 
-![SeasonDial in spring](docs/screenshots/spring.png)
+| Spring | Summer | Autumn | Winter |
+| :---: | :---: | :---: | :---: |
+| ![spring](docs/screenshots/spring.png) | ![summer](docs/screenshots/summer.png) | ![autumn](docs/screenshots/autumn.png) | ![winter](docs/screenshots/winter.png) |
+
+The wedge that hands the ground over to the next season, and the three sizes side by side:
+
+| Season sweep | Sizes S / M / L |
+| :---: | :---: |
+| ![season sweep](docs/screenshots/season-sweep.png) | ![overview](docs/screenshots/overview.png) |
 
 ---
 

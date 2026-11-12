@@ -14,7 +14,15 @@
   <a href="docs/manual.zh-CN.md">完整使用说明（含菜单、语录全文、节气对照表）</a>
 </p>
 
-![春天的四季转盘](docs/screenshots/spring.png)
+| 春 | 夏 | 秋 | 冬 |
+| :---: | :---: | :---: | :---: |
+| ![春](docs/screenshots/spring.png) | ![夏](docs/screenshots/summer.png) | ![秋](docs/screenshots/autumn.png) | ![冬](docs/screenshots/winter.png) |
+
+换季时扫过盘面的金色楔形边界，以及「小 / 中 / 大」三档尺寸并排对照：
+
+| 扫季瞬间 | 三档尺寸 |
+| :---: | :---: |
+| ![扫季](docs/screenshots/season-sweep.png) | ![尺寸](docs/screenshots/overview.png) |
 
 ---
 
