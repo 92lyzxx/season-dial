@@ -6,6 +6,7 @@ const STATE_FILE = () => path.join(app.getPath('userData'), 'window-state.json')
 
 let win = null;
 let tray = null;
+let donateWin = null;
 let dragOrigin = null;
 
 const DEFAULT_SIZE = { width: 500, height: 352 };
@@ -98,6 +99,85 @@ function createWindow() {
   win.on('closed', () => { win = null; });
 }
 
+/* ---------- 打赏窗口：右键菜单 / 托盘里的「打赏作者」 ---------- */
+
+const DONATE_SIZE = { width: 380, height: 508 };
+
+function createDonateWindow() {
+  if (donateWin && !donateWin.isDestroyed()) {
+    donateWin.show();
+    donateWin.focus();
+    return donateWin;
+  }
+
+  // 优先贴着桌宠窗口出现，桌宠不在时退回主屏中央
+  let cx, cy;
+  if (win && !win.isDestroyed()) {
+    const b = win.getBounds();
+    cx = b.x + b.width / 2;
+    cy = b.y + b.height / 2;
+  } else {
+    const a = screen.getPrimaryDisplay().workArea;
+    cx = a.x + a.width / 2;
+    cy = a.y + a.height / 2;
+  }
+  const area = screen.getDisplayNearestPoint({ x: Math.round(cx), y: Math.round(cy) }).workArea;
+  const x = Math.min(
+    Math.max(Math.round(cx - DONATE_SIZE.width / 2), area.x),
+    area.x + area.width - DONATE_SIZE.width
+  );
+  const y = Math.min(
+    Math.max(Math.round(cy - DONATE_SIZE.height / 2), area.y),
+    area.y + area.height - DONATE_SIZE.height
+  );
+
+  donateWin = new BrowserWindow({
+    width: DONATE_SIZE.width,
+    height: DONATE_SIZE.height,
+    x, y,
+    transparent: true,
+    frame: false,
+    resizable: false,
+    movable: true,
+    maximizable: false,
+    minimizable: false,
+    fullscreenable: false,
+    skipTaskbar: true,
+    hasShadow: false,
+    show: false,
+    backgroundColor: '#00000000',
+    focusable: true,
+    title: '打赏 SeasonDial',
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  donateWin.setAlwaysOnTop(true, 'screen-saver');
+  donateWin.setMenu(null);
+  donateWin.loadFile(path.join(__dirname, 'renderer', 'donate.html'));
+
+  donateWin.once('ready-to-show', () => {
+    donateWin.show();
+    donateWin.focus();
+  });
+
+  donateWin.on('closed', () => { donateWin = null; });
+  return donateWin;
+}
+
+function closeDonateWindow() {
+  if (donateWin && !donateWin.isDestroyed()) donateWin.close();
+}
+
+ipcMain.on('pet:donate', () => {
+  if (win && !win.isDestroyed()) win.webContents.send('pet:menuClose');
+  createDonateWindow();
+});
+ipcMain.on('donate:close', () => closeDonateWindow());
+
 function createTray() {
   tray = new Tray(pickIcon().resize({ width: 32, height: 32 }));
   const rebuild = () => {
@@ -129,6 +209,11 @@ function createTray() {
           );
           saveState();
         }
+      },
+      { type: 'separator' },
+      {
+        label: '打赏作者',
+        click: () => createDonateWindow()
       },
       { type: 'separator' },
       { label: '退出', click: () => app.quit() }

@@ -1,7 +1,7 @@
 {
   "name": "season-dial",
   "productName": "SeasonDial",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A four-season desktop clock pet for Windows: an oval seasonal island whose golden needle sweeps spring green into summer teal, autumn amber and winter snow while showing the real time.",
   "main": "main.js",
   "author": "溪行 (Xixing)",
@@ -50,6 +50,7 @@
       "renderer/**/*",
       "build/icon.ico",
       "assets/icon.png",
+      "assets/donate.png",
       "!assets/icon_src.png"
     ],
     "compression": "maximum"

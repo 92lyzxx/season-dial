@@ -1803,6 +1803,12 @@ const MENU_DEF = [
       { label: '鼠标穿透', toggle: 'clickThrough', apply: (v) => ipc.send('pet:clickthrough', v) },
       { label: '开机自启', toggle: 'autoStart', apply: (v) => ipc.send('pet:autostart', v) }
     ]
+  },
+  {
+    title: '支持',
+    items: [
+      { label: '打赏作者', act: () => ipc.send('pet:donate', {}) }
+    ]
   }
 ];
 

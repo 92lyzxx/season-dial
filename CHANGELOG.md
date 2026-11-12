@@ -3,6 +3,19 @@
 All notable changes to SeasonDial (四季转盘) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow SemVer.
 
+## [1.1.0] — 2026-11-13
+
+### Added
+- **Tip the author**: a new "打赏作者 / Tip the author" entry in the right-click menu and in the tray menu opens a small always-on-top window showing the WeChat reward QR code, with a close button and `Esc` support. The window is centred on the pet, clamped into the work area, and reused instead of stacked when opened twice.
+- `renderer/donate.html` — the donate popup (dark rounded panel, gold title, QR card, close button).
+- `assets/donate.png` — the reward code card, cropped free of the surrounding screenshot frame.
+- `tools/make_donate.py` — rebuilds `assets/donate.png` from the original screenshot.
+- `tools/preview_donate.js` — renders the donate popup offscreen to `tools/out/donate_preview.png` for layout checks without opening a GUI.
+
+### Changed
+- `README.md` is now the Simplified Chinese readme (the default GitHub landing page); the English one moved to `README.en.md`, with cross links updated both ways.
+- Version bumped to 1.1.0; the portable artefact is now `SeasonDial-1.1.0.exe`.
+
 ## [1.0.0] — 2026-11-13
 
 First public release.

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>打赏 SeasonDial</title>
+  <style>
+    :root { color-scheme: dark; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .panel {
+      width: 100%;
+      height: 100%;
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #121a22 0%, #0d1319 100%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .title {
+      flex: none;
+      width: 100%;
+      text-align: center;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      color: #e8c877;
+      -webkit-app-region: drag;
+      cursor: default;
+    }
+
+    .card {
+      flex: none;
+      padding: 8px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    .qr {
+      display: block;
+      width: 316px;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .hint {
+      flex: none;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .close {
+      flex: none;
+      margin-top: auto;
+      min-width: 108px;
+      height: 34px;
+      padding: 0 18px;
+      border: 1px solid rgba(232, 200, 119, 0.55);
+      border-radius: 999px;
+      background: rgba(232, 200, 119, 0.12);
+      color: #f0d79a;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      -webkit-app-region: no-drag;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .close:hover { background: rgba(232, 200, 119, 0.24); border-color: rgba(232, 200, 119, 0.9); }
+    .close:active { background: rgba(232, 200, 119, 0.34); }
+  </style>
+</head>
+<body>
+  <div class="panel">
+    <div class="title">微信扫码赞赏，感谢支持！</div>
+    <div class="card">
+      <img class="qr" src="../assets/donate.png" alt="微信赞赏码" />
+    </div>
+    <div class="hint">打开微信 → 扫一扫 → 选择相册中的二维码<br />或直接把手机对准屏幕</div>
+    <button class="close" id="close">关闭</button>
+  </div>
+
+  <script>
+    const api = window.pet;
+    const close = () => {
+      if (api && api.send) api.send('donate:close', {});
+      else window.close();
+    };
+    document.getElementById('close').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+  </script>
+</body>
+</html>

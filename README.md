@@ -1,71 +1,72 @@
 # SeasonDial · 四季转盘
 
 <p align="center">
-  <img src="docs/icon.png" width="132" alt="SeasonDial icon" />
+  <img src="docs/icon.png" width="132" alt="SeasonDial 图标" />
 </p>
 
 <p align="center">
-  A four-season desktop clock pet for Windows.<br />
-  An oval seasonal island floats on your desktop; a golden needle sweeps the ground from spring green into summer teal, autumn amber and winter snow — while the time, date and a healing line of text sit underneath.
+  Windows 桌面四季时钟桌宠。<br />
+  一块椭圆四季岛悬在桌面上，金色指针扫过地面，春绿 → 夏青 → 秋黄 → 冬雪依次铺开，盘下显示真实时间、日期与一句治愈语录。
 </p>
 
 <p align="center">
-  <a href="README.zh-CN.md">简体中文说明</a> ·
-  <a href="docs/manual.zh-CN.md">完整使用说明</a>
+  <a href="README.en.md">English</a> ·
+  <a href="docs/manual.zh-CN.md">完整使用说明（含菜单、语录全文、节气对照表）</a>
 </p>
 
-| Spring | Summer | Autumn | Winter |
+| 春 | 夏 | 秋 | 冬 |
 | :---: | :---: | :---: | :---: |
-| ![spring](docs/screenshots/spring.png) | ![summer](docs/screenshots/summer.png) | ![autumn](docs/screenshots/autumn.png) | ![winter](docs/screenshots/winter.png) |
+| ![春](docs/screenshots/spring.png) | ![夏](docs/screenshots/summer.png) | ![秋](docs/screenshots/autumn.png) | ![冬](docs/screenshots/winter.png) |
 
-The wedge that hands the ground over to the next season, and the three sizes side by side:
+换季时扫过盘面的金色楔形边界，以及「小 / 中 / 大」三档尺寸并排对照：
 
-| Season sweep | Sizes S / M / L |
+| 扫季瞬间 | 三档尺寸 |
 | :---: | :---: |
-| ![season sweep](docs/screenshots/season-sweep.png) | ![overview](docs/screenshots/overview.png) |
+| ![扫季](docs/screenshots/season-sweep.png) | ![尺寸](docs/screenshots/overview.png) |
 
 ---
 
-## What it is
+## 它是什么
 
-A frameless, transparent, always-on-top Electron window that draws everything with Canvas 2D — no images, no game engine, ~6k lines of vanilla JS and one `main.js`.
+一个无边框、全透明、置顶的 Electron 窗口，全部画面用 Canvas 2D 手绘——没有图片素材、没有游戏引擎，只有一份 `main.js` 加一套原生 JS。
 
-The disc is an oval "island": a grass plate with a dark hole as the clock hub, a golden beam running from the hub to the rim acting as the second hand, a ring of light beads as tick marks, a small black cat and a white dove living on the surface.
+盘体是椭圆「四季岛」：草地圆盘 + 中央黑洞表盘 + 从盘心射向盘沿的金色光束（当秒针用）+ 一圈灯珠刻度 + 一只小黑猫和一只小白鸽。
 
-Two independent cycles run at once:
+画面上同时跑两套循环：
 
-| Cycle | What it does |
+| 循环 | 效果 |
 | --- | --- |
-| **Second hand** (60 s / turn) | The golden beam rotates; behind it the ground is revealed season by season, so the tail of each sweep carries the colour of the season passed. |
-| **Season** | Every 60 s (configurable) the whole disc wipes to the next season with a sharp, glowing wedge boundary: spring → summer → autumn → winter. |
+| **秒针**（60 秒一圈） | 金色光束绕盘心旋转，扫过的地方依次露出当季地面，光束尾部拖着一路颜色。 |
+| **季节** | 默认每 60 秒整盘扫动换季一次，扇形边界清晰并带金色亮边：春 → 夏 → 秋 → 冬。 |
 
-## Features
+## 特点
 
-- **Real seasons, computed properly** — "follow the real season" uses the sun's apparent ecliptic longitude (low-precision Meeus) to find the exact 24 solar terms in Beijing time, then picks the season from those boundaries. Verified against the official almanac for 2025–2028: same day, within 1–13 minutes.
-- **Four clearly different grounds** — fresh green grass, bright midday-teal water with lotus leaves, dry amber litter, pure snow.
-- **Sky per season** — cherry petals, rising white water glints, falling leaves with veins, snow.
-- **The cat and the dove keep a schedule** — they curl up and sleep (with floating `z`) at night, loaf and blink by day, pace and flap at dawn and dusk.
-- **Healing lines, original** — six original lines per season, rotating every 26 s with a cross-fade, never repeating back-to-back and always swapped when the season changes.
-- **Readable on any wallpaper** — all three lines of text carry a dark outline plus a tight drop shadow, so they stay legible on a pure white window as well as a dark desktop.
-- **Three sizes** — small 380×268, medium 500×352, large 650×458, scaled around the window centre and clamped into the work area.
-- **Light on the CPU** — 30 fps cap, cached base layer, per-season wedge compositing instead of full redraws: measured 18–23 % of one core on a 16-core machine, and drawing stops entirely when hidden.
+- **真实节气，认真算的** —— 「跟随真实季节」不是按月份粗分：用太阳视黄经（Meeus 低精度解）求出二十四节气在北京时间的具体时刻，再按立春/立夏/立秋/立冬切季。与官方历书核对 2025–2028：同一天，误差 1–13 分钟。
+- **四季地面彻底区分** —— 嫩黄绿草地 / 正午明青水面（荷叶、睡莲）/ 土黄落叶地 / 纯白覆雪。
+- **每季有各自的天气** —— 樱花花瓣、水面白闪光上浮、带叶脉的落叶、雪花。
+- **猫和鸽子按点作息** —— 夜里猫蜷成团睡觉（飘 `z`）、鸽子把头缩进翅膀；白天猫 loaf 眨眼、鸽子踱步；黎明黄昏绕行、振翅。
+- **原创治愈语录** —— 每季 6 条原创句子，26 秒随机轮换 + 淡入淡出，同季不连着重复，换季必换句。
+- **任何壁纸上都看得清** —— 三行文字都带深色描边 + 紧凑投影，纯白窗口和深色桌面都不糊。
+- **三档尺寸** —— 小 380×268 / 中 500×352 / 大 650×458，按窗口中心缩放并自动钳回工作区内。
+- **占用低** —— 30fps 限帧 + 底层缓存 + 扫季只叠加扇形：实测 18%–23% 单核（16 核机器约 1.2%–1.5% 总占用），窗口不可见时直接停画。
+- **能打赏** —— 右键菜单和托盘里都有「打赏作者」，点开是一张微信赞赏码，随时可以请作者喝杯茶。
 
-## Download
+## 下载
 
-Grab the latest portable build from [Releases](https://github.com/92lyzxx/season-dial/releases): `SeasonDial-1.0.0.exe`.
+到 [Releases](https://github.com/92lyzxx/season-dial/releases) 下载 `SeasonDial-1.1.0.exe`。
 
-It is a portable single-file build — no installer, no admin rights. Windows may show a SmartScreen warning because the binary is unsigned: *More information → Run anyway*.
+单文件便携版，免安装、不需要管理员权限。因为未做代码签名，Windows 可能弹 SmartScreen：点「更多信息 → 仍要运行」。
 
-## Build from source
+## 自己编译
 
 ```bash
 npm install
-npm start          # run with Electron directly
-npm run pack       # build the portable exe into dist/
-npm run icon       # regenerate build/icon.ico + assets/icon.png (needs Python + Pillow)
+npm start          # 直接用 Electron 跑
+npm run pack       # 打包便携版 exe 到 dist/
+npm run icon       # 重新生成 build/icon.ico 与 assets/icon.png（需要 Python + Pillow）
 ```
 
-If `npm install` or the build is slow in mainland China, point both mirrors at npmmirror first:
+国内网络建议先设镜像：
 
 ```powershell
 $env:ELECTRON_MIRROR = "https://npmmirror.com/mirrors/electron/"
@@ -73,62 +74,70 @@ $env:ELECTRON_BUILDER_BINARIES_MIRROR = "https://npmmirror.com/mirrors/electron-
 npm run pack
 ```
 
-Requirements: Node 18+, Python 3 only for the icon script.
+需要 Node 18+；只有生成图标时才需要 Python 3。
 
-## Controls
+## 操作
 
-| Action | Result |
+| 动作 | 效果 |
 | --- | --- |
-| Drag with the left button | Move the island; the position is remembered |
-| Left click on the disc | A golden ripple spreads out |
-| Right click | Menu: season mode, clock/ticks, rotation interval, size, always-on-top, click-through, autostart, quit |
-| Esc / click anywhere outside | The menu closes by itself |
+| 左键按住拖动 | 移动桌宠，位置会记住 |
+| 左键单击盘面 | 荡开一圈金色涟漪 |
+| 右键 | 菜单：季节模式、时钟/刻度开关、轮转间隔、窗口尺寸、置顶、鼠标穿透、开机自启、打赏作者、退出 |
+| Esc / 点窗口外任意位置 | 菜单自动收起 |
 
-On first launch the island appears in the **top-right corner** with a 24 px margin; after that it comes back where you left it.
+首次启动窗口出现在**屏幕右上角**（留 24px 边距），之后按你拖动过的位置恢复。
 
-## Seasons at a glance
+## 打赏
 
-| Season | Ground | Sky | Extras |
+<p align="center">
+  <img src="docs/screenshots/donate.png" width="420" alt="打赏弹窗" />
+</p>
+
+右键菜单 **支持 → 打赏作者**（托盘的右键菜单里也有同一项），点开就是这张微信赞赏码，手机扫一扫即可。窗口置顶、可拖动，点「关闭」或按 `Esc` 收起。
+
+## 四季一览
+
+| 季节 | 地面 | 天空 | 装饰 |
 | --- | --- | --- | --- |
-| Spring | Fresh yellow-green grass | Cherry petals drifting | Small flowers |
-| Summer | Bright midday teal water, lotus leaves and water lilies | White glints rising off the water | Water reflections |
-| Autumn | Dry amber earth | Falling leaves with veins | Leaf litter |
-| Winter | Pure snow cover | Snowflakes and soft glow | Snow piled on the rim, dark tick marks |
+| 春 | 嫩黄绿草地 | 粉白樱花瓣飘落 | 小花点缀 |
+| 夏 | 正午明青水面（亮青绿水 + 荷叶 + 睡莲） | 水面白闪光上浮 | 水面反光 |
+| 秋 | 土黄落叶地 | 枯叶飘落（带叶脉尖头） | 碎叶堆 |
+| 冬 | 纯白覆雪 | 雪花 + 柔光 | 盘沿积雪、刻度改深色 |
 
-## Performance
+## 性能
 
-Measured on 1920×1080, medium size, 16-core CPU:
+1920×1080、默认中档、16 核机器实测：
 
-| Metric | Value |
+| 指标 | 数值 |
 | --- | --- |
-| FPS | 30 (capped; `?fps=60` when running from source) |
-| CPU | 18–23 % of one core (≈1.2–1.5 % of total) |
-| Memory | ~430 MB working set across five Electron processes |
-| Idle behaviour | Rendering stops when the page is hidden |
+| 帧率 | 30fps 限帧（源码运行可加 `?fps=60`） |
+| CPU | 18%–23% 单核（约 1.2%–1.5% 总占用） |
+| 内存 | 五进程工作集合计约 430MB |
+| 隐藏时 | 停止绘制 |
 
-Memory is Electron's baseline rather than leaked canvas resources; it does not keep climbing.
+内存属 Electron 基线，不是画布资源泄漏，长时间运行不会持续上涨；想再低只能换掉 Electron 原生重写。
 
-## Project layout
+## 目录结构
 
 ```
-main.js                 # window, tray, IPC, window-state persistence
+main.js                 # 窗口、托盘、IPC、窗口位置持久化
 preload.js              # contextBridge -> window.pet.{send,invoke,on}
 renderer/
   index.html
-  style.css             # the right-click menu
-  app.js                # everything drawn here: palette, textures, seasons, cat & dove, hands, menu
-build/icon.ico          # Windows icon, 7 sizes, small sizes use a simplified crop
-assets/icon.png         # tray icon
-tools/                  # dev-only: offline screenshots, solar-term probe, icon generator
-docs/                   # screenshots and the Chinese manual
+  style.css             # 右键菜单样式
+  app.js                # 全部绘制：调色板、贴图、季节、猫鸽、指针、菜单
+build/icon.ico          # Windows 图标，7 个尺寸，小尺寸用简化裁图
+assets/icon.png         # 托盘图标
+tools/                  # 开发用：离屏截图、节气探测、图标生成
+docs/                   # 截图与使用说明
 ```
 
-## How the season is computed
+## 季节怎么算的
 
-`solarTermOf(date)` solves the sun's apparent longitude with Meeus' low-precision formulas, converts the timestamp to UTC+8 and reads the Beijing wall-clock instant of each term. Season boundaries are 立春 (spring), 立夏 (summer), 立秋 (autumn) and 立冬 (winter); `tools/verify_terms.js` prints the table this build was checked against.
+`solarTermOf(date)` 先用 Meeus 低精度公式解太阳视黄经，再把时间戳 +8 小时读成北京墙上时间，得到每个节气的具体时刻；季节以立春、立夏、立秋、立冬为界。`node tools/verify_terms.js` 会打印本版核对过的节气表。
 
-## License
+## 许可
 
-[MIT](LICENSE) © 2026 溪行 (Xixing)
+[MIT](LICENSE) © 2026 溪行
 
-The four seasons' lines of text are original, written for this project.
+四季语录为本项目原创撰写。
