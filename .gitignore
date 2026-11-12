@@ -1,0 +1,21 @@
+# ---- Node / build ----
+node_modules/
+dist/
+.cache-builder/
+npm-debug.log*
+package-lock.json.bak
+
+# ---- dev artifacts ----
+tools/out/
+tools/build.log
+*.log
+*.err
+
+# ---- OS ----
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ---- editors ----
+.vscode/
+.idea/
