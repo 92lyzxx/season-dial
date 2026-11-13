@@ -38,12 +38,16 @@ Two independent cycles run at once:
 | --- | --- |
 | **Second hand** (60 s / turn) | The golden beam rotates; behind it the ground is revealed season by season, so the tail of each sweep carries the colour of the season passed. |
 | **Season** | Every 60 s (configurable) the whole disc wipes to the next season with a sharp, glowing wedge boundary: spring → summer → autumn → winter. |
+| **Turbo spin** (optional) | The beam speeds up to one turn in 15 s and hands the ground over every time it passes 12 o'clock, so all four seasons run past in 15 s. Visual only — the clock underneath keeps real time. |
 
 ## Features
 
 - **Real seasons, computed properly** — "follow the real season" uses the sun's apparent ecliptic longitude (low-precision Meeus) to find the exact 24 solar terms in Beijing time, then picks the season from those boundaries. Verified against the official almanac for 2025–2028: same day, within 1–13 minutes.
 - **Four clearly different grounds** — fresh green grass, bright midday-teal water with lotus leaves, dry amber litter, pure snow.
-- **Sky per season** — cherry petals, rising white water glints, falling leaves with veins, snow.
+- **The seasons grow inside the disc** — flowers rise on their stems in spring, water lilies float in summer, rice stalks grow taller in autumn, deep drifts pile up in winter; when the season changes the new decorations grow out of the ground while the old ones fade away.
+- **The cat leaves footprints** — in winter the ground is snow, and the cat's walk around the disc leaves a trail of fading paw prints that fill back in after about 26 s.
+- **Sky per season** — cherry petals, rising white water glints, falling leaves with veins, snow; all of them fade out as they drift below the disc, so nothing is chopped off at the window edge.
+- **Watch all four seasons quickly** — right-click "Season → Turbo spin": one turn in 15 s, a new season at every 12 o'clock, purely visual and without touching the clock reading.
 - **The cat and the dove keep a schedule** — they curl up and sleep (with floating `z`) at night, loaf and blink by day, pace and flap at dawn and dusk.
 - **Healing lines, original** — six original lines per season, rotating every 26 s with a cross-fade, never repeating back-to-back and always swapped when the season changes.
 - **Readable on any wallpaper** — all three lines of text carry a dark outline plus a tight drop shadow, so they stay legible on a pure white window as well as a dark desktop.
@@ -53,7 +57,7 @@ Two independent cycles run at once:
 
 ## Download
 
-Grab the latest portable build from [Releases](https://github.com/92lyzxx/season-dial/releases): `SeasonDial-1.1.0.exe`.
+Grab the latest portable build from [Releases](https://github.com/92lyzxx/season-dial/releases): `SeasonDial-1.2.0.exe`.
 
 It is a portable single-file build — no installer, no admin rights. Windows may show a SmartScreen warning because the binary is unsigned: *More information → Run anyway*.
 
@@ -82,7 +86,7 @@ Requirements: Node 18+, Python 3 only for the icon script.
 | --- | --- |
 | Drag with the left button | Move the island; the position is remembered |
 | Left click on the disc | A golden ripple spreads out |
-| Right click | Menu: season mode, clock/ticks, rotation interval, size, always-on-top, click-through, autostart, tip the author, quit |
+| Right click | Menu: season mode (auto / turbo spin / follow the real season / fixed season), clock and ticks, rotation interval, size, always-on-top, click-through, autostart, tip the author, quit |
 | Esc / click anywhere outside | The menu closes by itself |
 
 On first launch the island appears in the **top-right corner** with a 24 px margin; after that it comes back where you left it.
@@ -97,12 +101,12 @@ Pick **Support → Tip the author** in the right-click menu (the tray menu has t
 
 ## Seasons at a glance
 
-| Season | Ground | Sky | Extras |
+| Season | Ground | Sky | Moving things inside the disc |
 | --- | --- | --- | --- |
-| Spring | Fresh yellow-green grass | Cherry petals drifting | Small flowers |
-| Summer | Bright midday teal water, lotus leaves and water lilies | White glints rising off the water | Water reflections |
-| Autumn | Dry amber earth | Falling leaves with veins | Leaf litter |
-| Winter | Pure snow cover | Snowflakes and soft glow | Snow piled on the rim, dark tick marks |
+| Spring | Fresh yellow-green grass | Cherry petals drifting | Small flowers rise on stems and sway |
+| Summer | Bright midday teal water, lotus leaves and water lilies | White glints rising off the water | Lotus blossoms float on the water, pads and ripples rocking |
+| Autumn | Dry amber earth | Falling leaves with veins | Rice stalks grow taller and put out ears |
+| Winter | Pure snow cover | Snowflakes and soft glow | Snow drifts pile up, the cat leaves paw prints; snow on the rim, dark tick marks |
 
 ## Performance
 

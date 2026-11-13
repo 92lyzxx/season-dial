@@ -30,6 +30,7 @@ const CFG = {
   topmost: true,
   clickThrough: false,
   autoStart: false,
+  turbo: false,            // 加速轮转：15 秒一圈，每转到 12 点换季（纯视觉，不影响时间）
   ver: 3
 };
 
@@ -596,14 +597,14 @@ function realSeason(date = new Date()) {
 let season = 'spring';
 let wipe = null;
 let nextChangeAt = 0;
+let seasonT0 = 0;          // 本季开始的时间：盘内装饰的「生长」动画用它计时
 
 function startWipe(to, dur, now) {
   if (to === season && !wipe) return;
   if (wipe && wipe.to === to) return;
   const from = wipe ? wipe.to : season;
-  const dd = new Date();
-  const sec = dd.getSeconds() + dd.getMilliseconds() / 1000;
-  wipe = { from, to, t0: now, dur, a0: -Math.PI / 2 + TAU * (sec / 60) };
+  // 扫动从当前光束位置开始，边界始终压在光束上（加速轮转时也一样）
+  wipe = { from, to, t0: now, dur, a0: -Math.PI / 2 + beamPhaseNow };
 }
 
 function wipeProgress(now) {
@@ -612,6 +613,17 @@ function wipeProgress(now) {
 }
 
 /* ---------------- 粒子 ---------------- */
+
+/* 落到盘面下方的特效要渐变消失，不能到窗口底边被硬切 */
+function discFadeStart() { return G.cy + G.ry * 1.02; }
+function discFadeEnd() { return Math.min(H - 2, discFadeStart() + Math.max(26, G.ry * 1.2)); }
+function discFade(y) {
+  const s = discFadeStart(), e = discFadeEnd();
+  if (y <= s) return 1;
+  if (y >= e) return 0;
+  const t = (y - s) / (e - s);
+  return 1 - t * t * (3 - 2 * t);
+}
 
 const parts = [];
 let partBudget = 44;
@@ -659,7 +671,7 @@ function drawParticles(now) {
   ctx.save();
   for (const p of parts) {
     const t = p.life / p.max;
-    const alpha = Math.sin(Math.min(1, t) * Math.PI);
+    const alpha = Math.sin(Math.min(1, t) * Math.PI) * discFade(p.y);
     if (alpha <= 0.02) continue;
     const py = p.y - t * 6;
     if (p.type === 'glint') {
@@ -751,7 +763,7 @@ function updateSky(dt, now) {
     if (p.type === 'glint') {
       if (p.y < -40) p.y = H + rnd(10, 60);
     }
-    if (p.y > H + 40 || p.y < -120) { sky.splice(i, 1); continue; }
+    if (p.y > discFadeEnd() || p.y < -120) { sky.splice(i, 1); continue; }
     // 换季时类型对不上的直接重生
     if (p.type !== skyTypeOf(season)) { sky.splice(i, 1); continue; }
   }
@@ -760,13 +772,15 @@ function updateSky(dt, now) {
 function drawSky(now) {
   ctx.save();
   for (const p of sky) {
+    const fa = p.a * discFade(p.y);      // 落到盘面下方时逐渐淡出
+    if (fa <= 0.02) continue;
     if (p.type === 'snow') {
       // 雪花：核心 + 柔光
-      ctx.fillStyle = `rgba(255,255,255,${p.a})`;
+      ctx.fillStyle = `rgba(255,255,255,${fa})`;
       ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
       if (p.r > 1.7) {
         const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3.4);
-        g.addColorStop(0, `rgba(240,248,255,${0.22 * p.a})`);
+        g.addColorStop(0, `rgba(240,248,255,${0.22 * fa})`);
         g.addColorStop(1, 'rgba(220,236,255,0)');
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 3.4, 0, TAU); ctx.fill();
@@ -776,15 +790,15 @@ function drawSky(now) {
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
       ctx.fillStyle = p.hue
-        ? `rgba(206,132,58,${p.a})`
-        : `rgba(244,196,104,${p.a})`;
+        ? `rgba(206,132,58,${fa})`
+        : `rgba(244,196,104,${fa})`;
       // 叶片：一头尖一头圆
       ctx.beginPath();
       ctx.moveTo(0, -p.r * 1.9);
       ctx.quadraticCurveTo(p.r * 1.5, -p.r * 0.3, 0, p.r * 1.5);
       ctx.quadraticCurveTo(-p.r * 1.5, -p.r * 0.3, 0, -p.r * 1.9);
       ctx.fill();
-      ctx.strokeStyle = `rgba(120,70,26,${0.45 * p.a})`;
+      ctx.strokeStyle = `rgba(120,70,26,${0.45 * fa})`;
       ctx.lineWidth = 0.8;
       ctx.beginPath(); ctx.moveTo(0, -p.r * 1.6); ctx.lineTo(0, p.r * 1.3); ctx.stroke();
       ctx.restore();
@@ -793,13 +807,13 @@ function drawSky(now) {
       ctx.translate(p.x, p.y);
       ctx.rotate(p.rot);
       // 樱花瓣：粉白，带一点深粉芯
-      ctx.fillStyle = `rgba(255,226,236,${p.a})`;
+      ctx.fillStyle = `rgba(255,226,236,${fa})`;
       ctx.beginPath();
       ctx.moveTo(0, p.r * 1.6);
       ctx.bezierCurveTo(-p.r * 1.7, p.r * 0.4, -p.r * 1.1, -p.r * 1.4, 0, -p.r * 1.2);
       ctx.bezierCurveTo(p.r * 1.1, -p.r * 1.4, p.r * 1.7, p.r * 0.4, 0, p.r * 1.6);
       ctx.fill();
-      ctx.fillStyle = `rgba(250,170,196,${0.45 * p.a})`;
+      ctx.fillStyle = `rgba(250,170,196,${0.45 * fa})`;
       ctx.beginPath();
       ctx.ellipse(0, p.r * 0.3, p.r * 0.5, p.r * 0.75, 0, 0, TAU);
       ctx.fill();
@@ -1116,7 +1130,361 @@ function drawSnowCap() {
 
 
 
+/* ---------------- 绘制：盘内四季装饰（会长、会动） ---------------- */
+
+const DECO = { spring: null, summer: null, autumn: null, winter: null };
+
+function buildDeco() {
+  const mk = (n, rmin, rmax, smin, smax, dmax) => {
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+      arr.push({
+        a: rnd(0, TAU),
+        rr: rnd(rmin, rmax),
+        s: rnd(smin, smax),
+        ph: rnd(0, TAU),
+        d: rnd(0, dmax),
+        tone: Math.floor(rnd(0, 3))
+      });
+    }
+    return arr;
+  };
+  DECO.spring = { flowers: mk(18, 0.16, 0.92, 0.7, 1.3, 1.3) };
+  DECO.summer = { lotus: mk(7, 0.24, 0.9, 0.8, 1.3, 1.1) };
+  DECO.autumn = { straw: mk(26, 0.18, 0.95, 0.75, 1.35, 1.6) };
+  DECO.winter = { mounds: mk(16, 0.14, 0.94, 0.85, 1.6, 0.9) };
+  // 按「离观察者远近」排序：后排先画，前排压在上面
+  for (const key of Object.keys(DECO)) {
+    const obj = DECO[key];
+    const list = obj.flowers || obj.lotus || obj.straw || obj.mounds;
+    list.sort((u, v) => Math.sin(u.a) - Math.sin(v.a));
+  }
+}
+
+/* 角度 + 半径 → 椭圆地面上的真实坐标 */
+function decoPos(a, rr) {
+  return {
+    x: G.cx + Math.cos(a) * G.R * rr,
+    y: G.cy + Math.sin(a) * G.ry * rr
+  };
+}
+
+/* 本季装饰的生长进度（换季之后从 0 慢慢长出来） */
+function decoGrow(now, d, dur) {
+  return easeOut(clamp((now - seasonT0 - d) / dur, 0, 1));
+}
+
+function drawSpringDeco(now, fade, k) {
+  for (const f of DECO.spring.flowers) {
+    const g = decoGrow(now, f.d, 1.7);
+    if (g <= 0.02) continue;
+    const p = decoPos(f.a, f.rr);
+    const h = (16 + 14 * f.s) * k * g;
+    const sway = Math.sin(now * 0.9 + f.ph) * 2.8 * k * g;
+    const tipX = p.x + sway, tipY = p.y - h;
+
+    // 根部落在草地上的小影子
+    ctx.fillStyle = `rgba(38,86,36,${0.2 * fade})`;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + 0.8 * k, 3.0 * k, 1.0 * k, 0, 0, TAU); ctx.fill();
+
+    // 根部的草叶，让花像从地里长出来
+    ctx.strokeStyle = `rgba(88,150,62,${0.55 * fade})`;
+    ctx.lineWidth = Math.max(0.7, 0.9 * k);
+    for (let j = -1; j <= 1; j++) {
+      if (j === 0) continue;
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+      ctx.quadraticCurveTo(p.x + j * 3.4 * k, p.y - h * 0.22, p.x + j * 4.6 * k, p.y - h * 0.34);
+      ctx.stroke();
+    }
+
+    // 茎
+    ctx.strokeStyle = `rgba(58,116,44,${0.9 * fade})`;
+    ctx.lineWidth = Math.max(1, 1.4 * k);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.quadraticCurveTo(p.x + sway * 0.35, p.y - h * 0.55, tipX, tipY);
+    ctx.stroke();
+
+    // 叶
+    ctx.fillStyle = `rgba(100,172,78,${0.62 * fade})`;
+    ctx.beginPath();
+    ctx.ellipse(p.x + sway * 0.2 + 3.0 * k, p.y - h * 0.48, 3.3 * k * g, 1.3 * k * g, 0.55, 0, TAU);
+    ctx.fill();
+
+    // 花：五片小花瓣 + 花心
+    const pr = (3.1 + 1.5 * f.s) * k * g;
+    const col = f.tone === 1
+      ? `rgba(255,238,172,${0.96 * fade})`
+      : f.tone === 2
+        ? `rgba(255,255,255,${0.96 * fade})`
+        : `rgba(255,214,228,${0.95 * fade})`;
+    for (let j = 0; j < 5; j++) {
+      const a = j / 5 * TAU + f.ph;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.ellipse(tipX + Math.cos(a) * pr * 0.82, tipY + Math.sin(a) * pr * 0.82,
+        pr * 0.78, pr * 0.5, a, 0, TAU);
+      ctx.fill();
+    }
+    ctx.fillStyle = `rgba(255,198,88,${0.92 * fade})`;
+    ctx.beginPath(); ctx.arc(tipX, tipY, pr * 0.46, 0, TAU); ctx.fill();
+  }
+}
+
+function drawAutumnDeco(now, fade, k) {
+  // 秋天：长高的稻草，一根根立在地里，顶上有稻穗
+  for (const f of DECO.autumn.straw) {
+    const g = decoGrow(now, f.d, 2.2);
+    if (g <= 0.02) continue;
+    const p = decoPos(f.a, f.rr);
+    const h = (28 + 26 * f.s) * k * g;
+    const sway = Math.sin(now * 0.6 + f.ph) * 3.6 * k;
+    const tipX = p.x + sway, tipY = p.y - h;
+
+    ctx.strokeStyle = `rgba(178,132,50,${0.95 * fade})`;
+    ctx.lineWidth = Math.max(1.2, 1.5 * k);
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.quadraticCurveTo(p.x + sway * 0.3, p.y - h * 0.6, tipX, tipY);
+    ctx.stroke();
+
+    // 稻穗
+    ctx.strokeStyle = `rgba(246,206,116,${0.9 * fade})`;
+    ctx.lineWidth = Math.max(0.9, 1.05 * k);
+    for (let j = -2; j <= 2; j++) {
+      const aa = -Math.PI / 2 + j * 0.34 + Math.sin(now * 0.7 + f.ph) * 0.06;
+      const L = (7 + 3 * f.s) * k * g;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY + 3 * k);
+      ctx.quadraticCurveTo(
+        tipX + Math.cos(aa) * L * 0.55, tipY + 3 * k + Math.sin(aa) * L * 0.55,
+        tipX + Math.cos(aa) * L, tipY + 3 * k + Math.sin(aa) * L
+      );
+      ctx.stroke();
+    }
+    // 根部一点暖影
+    ctx.fillStyle = `rgba(112,78,28,${0.28 * fade})`;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + 0.6 * k, 2.8 * k, 1.05 * k, 0, 0, TAU); ctx.fill();
+  }
+}
+
+function drawSummerDeco(now, fade, k) {
+  // 夏天：水面上的荷花，俯看一层层花瓣铺开，随水轻晃
+  for (const f of DECO.summer.lotus) {
+    const g = decoGrow(now, f.d, 1.6);
+    if (g <= 0.02) continue;
+    const p = decoPos(f.a, f.rr);
+    const bob = Math.sin(now * 1.2 + f.ph) * 1.5 * k;
+    const pr = (5.0 + 2.2 * f.s) * k * g;
+    const cx0 = p.x, cy0 = p.y + bob;
+    const spin = Math.sin(now * 0.9 + f.ph) * 0.08;
+
+    // 水面被压出的一圈浅浅涟漪
+    ctx.strokeStyle = `rgba(214,255,248,${0.22 * fade})`;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath(); ctx.ellipse(cx0, cy0 + pr * 0.55, pr * 1.75, pr * 0.55, 0, 0, TAU); ctx.stroke();
+
+    // 荷叶
+    ctx.fillStyle = `rgba(46,124,110,${0.42 * fade})`;
+    ctx.beginPath(); ctx.ellipse(cx0 - pr * 1.5, cy0 + pr * 0.42, pr * 1.35, pr * 0.5, 0, 0, TAU); ctx.fill();
+
+    // 外层花瓣（深粉）
+    for (let j = 0; j < 6; j++) {
+      const a = j / 6 * TAU + spin;
+      ctx.fillStyle = `rgba(234,140,174,${0.86 * fade})`;
+      ctx.beginPath();
+      ctx.ellipse(cx0 + Math.cos(a) * pr * 0.72, cy0 + Math.sin(a) * pr * 0.72,
+        pr * 0.68, pr * 0.34, a, 0, TAU);
+      ctx.fill();
+    }
+    // 内层花瓣（浅粉）
+    for (let j = 0; j < 5; j++) {
+      const a = j / 5 * TAU + spin + 0.5;
+      ctx.fillStyle = `rgba(255,206,222,${0.94 * fade})`;
+      ctx.beginPath();
+      ctx.ellipse(cx0 + Math.cos(a) * pr * 0.34, cy0 + Math.sin(a) * pr * 0.34,
+        pr * 0.42, pr * 0.26, a, 0, TAU);
+      ctx.fill();
+    }
+    // 花心
+    ctx.fillStyle = `rgba(255,232,158,${0.92 * fade})`;
+    ctx.beginPath(); ctx.arc(cx0, cy0, pr * 0.14, 0, TAU); ctx.fill();
+  }
+}
+
+/* 一堆雪的样子：圆润的小丘 + 顶部亮边 + 贴地的一道边 */
+function snowDome(x, y, w, h, fade) {
+  if (w < 0.6 || h < 0.4) return;
+  const grad = ctx.createLinearGradient(x, y - h, x, y);
+  grad.addColorStop(0, `rgba(255,255,255,${0.99 * fade})`);
+  grad.addColorStop(0.5, `rgba(250,253,255,${0.96 * fade})`);
+  grad.addColorStop(1, `rgba(203,221,242,${0.92 * fade})`);
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.5, y);
+  ctx.bezierCurveTo(x - w * 0.44, y - h * 0.9, x - w * 0.2, y - h * 1.04, x, y - h);
+  ctx.bezierCurveTo(x + w * 0.2, y - h * 1.04, x + w * 0.44, y - h * 0.9, x + w * 0.5, y);
+  ctx.closePath();
+  ctx.fill();
+
+  // 贴地的一道冷边，让它压在雪面上而不是浮着
+  ctx.strokeStyle = `rgba(176,198,222,${0.4 * fade})`;
+  ctx.lineWidth = Math.max(0.6, h * 0.09);
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.5, y - h * 0.02);
+  ctx.quadraticCurveTo(x, y + h * 0.12, x + w * 0.5, y - h * 0.02);
+  ctx.stroke();
+
+  // 顶部亮边
+  ctx.strokeStyle = `rgba(255,255,255,${0.72 * fade})`;
+  ctx.lineWidth = Math.max(0.6, h * 0.11);
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.30, y - h * 0.52);
+  ctx.quadraticCurveTo(x - w * 0.06, y - h * 0.98, x + w * 0.22, y - h * 0.58);
+  ctx.stroke();
+}
+
+function drawWinterDeco(now, fade, k) {
+  // 冬天：地上堆起一层层厚雪，越往后越白
+  const R = G.R;
+  for (const f of DECO.winter.mounds) {
+    const g = decoGrow(now, f.d, 1.8);
+    if (g <= 0.02) continue;
+    const p = decoPos(f.a, f.rr);
+    const w = R * 0.115 * f.s * g;
+    const h = R * 0.027 * f.s * g;
+
+    // 雪堆压出来的淡影
+    ctx.fillStyle = `rgba(142,170,202,${0.18 * fade})`;
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + h * 0.22, w * 0.66, h * 0.3, 0, 0, TAU); ctx.fill();
+
+    // 主体 + 两侧的小堆，合成一整片积雪
+    snowDome(p.x + w * 0.32, p.y + h * 0.05, w * 0.52, h * 0.66, fade);
+    snowDome(p.x - w * 0.36, p.y + h * 0.03, w * 0.46, h * 0.52, fade);
+    snowDome(p.x, p.y, w, h, fade);
+  }
+}
+
+/* 雪地里猫的脚印：一只只踩下去，慢慢被新雪盖住 */
+const footprints = [];
+const PRINT_LIFE = 26;
+let lastFoot = null;
+
+function initFootprints() {
+  footprints.length = 0;
+  lastFoot = null;
+}
+
+function updateFootprints(now) {
+  if (season !== 'winter') {
+    if (footprints.length) initFootprints();
+    return;
+  }
+  for (let i = footprints.length - 1; i >= 0; i--) {
+    if (now - footprints[i].t > PRINT_LIFE) footprints.splice(i, 1);
+  }
+  const cat = catPose(now);
+  if (!cat || cat.state !== 'walk') { lastFoot = null; return; }
+
+  const k = G.R / 230;
+  if (!lastFoot) { lastFoot = { x: cat.x, y: cat.y }; return; }
+  const dx = cat.x - lastFoot.x, dy = cat.y - lastFoot.y;
+  if (Math.hypot(dx, dy) < 11 * k) return;
+
+  const len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len;
+  const side = footprints.length % 2 === 0 ? 1 : -1;
+  footprints.push({
+    x: cat.x + nx * side * 2.4 * k,
+    y: cat.y + ny * side * 2.4 * k,
+    rot: Math.atan2(dy, dx),
+    s: k,
+    t: now
+  });
+  lastFoot = { x: cat.x, y: cat.y };
+  if (footprints.length > 160) footprints.shift();
+}
+
+function drawFootprints(now, fade) {
+  if (!footprints.length || season !== 'winter') return;
+  for (const p of footprints) {
+    const age = (now - p.t) / PRINT_LIFE;
+    const a = clamp(1 - age, 0, 1);
+    const al = 0.62 * Math.pow(a, 1.4) * fade;
+    if (al <= 0.02) continue;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    // 雪花被踩下去：偏冷的蓝灰，比雪面深一档
+    ctx.fillStyle = `rgba(108,140,176,${al})`;
+    ctx.beginPath(); ctx.ellipse(0, 0, 3.2 * p.s, 2.4 * p.s, 0, 0, TAU); ctx.fill();
+    for (let i = -1; i <= 1; i++) {
+      ctx.beginPath();
+      ctx.arc(i * 2.3 * p.s, -2.8 * p.s, 1.05 * p.s, 0, TAU);
+      ctx.fill();
+    }
+    // 坑边一圈被踩实的白
+    ctx.strokeStyle = `rgba(255,255,255,${0.5 * al})`;
+    ctx.lineWidth = Math.max(0.6, 0.7 * p.s);
+    ctx.beginPath(); ctx.ellipse(0, 0, 3.2 * p.s, 2.4 * p.s, 0, 0, TAU); ctx.stroke();
+    ctx.restore();
+  }
+}
+
+function drawSeasonDeco(now) {
+  if (!texturesReady || !G.R) return;
+  if (!DECO.spring) buildDeco();
+  // 换季扫动时，旧季的装饰与脚印一起淡出，等新季落地再重新长出
+  const fade = wipe ? 1 - wipeProgress(now) : 1;
+  if (fade <= 0.01) return;
+  const k = G.R / 230;
+  if (season === 'spring') drawSpringDeco(now, fade, k);
+  else if (season === 'summer') drawSummerDeco(now, fade, k);
+  else if (season === 'autumn') drawAutumnDeco(now, fade, k);
+  else if (season === 'winter') { drawWinterDeco(now, fade, k); drawFootprints(now, fade); }
+}
+
 /* ---------------- 绘制：猫与鸽 ---------------- */
+
+/* 猫的姿态：动物绘制与脚印共用，避免两处坐标跑偏 */
+function catPose(now) {
+  const R = G.R, ry = G.ry;
+  const k = R / 230;
+  const part = daypartNow();
+  const cr = R * 0.66;
+
+  if (part === 'night') {
+    const ca = 0.32;
+    return {
+      state: 'sleep', part,
+      x: G.cx + Math.cos(ca) * cr,
+      y: G.cy + Math.sin(ca) * ry * (cr / R),
+      s: 1.55 * k, dir: 1, ph: now * 1.0, bob: 0
+    };
+  }
+  if (part === 'day') {
+    const ca = 0.32;
+    return {
+      state: 'loaf', part,
+      x: G.cx + Math.cos(ca) * cr,
+      y: G.cy + Math.sin(ca) * ry * (cr / R),
+      s: 1.54 * k, dir: 1, ph: now * 1.4, bob: 0
+    };
+  }
+  const walkSpeed = part === 'dusk' ? 0.075 : 0.045;
+  const ca = now * walkSpeed + 0.9;
+  return {
+    state: 'walk', part,
+    x: G.cx + Math.cos(ca) * cr,
+    y: G.cy + Math.sin(ca) * ry * (cr / R),
+    s: 1.5 * k,
+    dir: Math.cos(ca + Math.PI / 2) >= 0 ? 1 : -1,
+    ph: now * 3.1,
+    bob: Math.abs(Math.sin(now * 2.4)) * 1.2 * k
+  };
+}
+
 
 function drawCat(x, y, s, dir, ph, state) {
   state = state || 'walk';
@@ -1343,38 +1711,22 @@ function drawZzz(x, y, k, now) {
 function drawAnimals(now) {
   const R = G.R, ry = G.ry;
   const k = R / 230;
-  const part = daypartNow();
+  const cat = catPose(now);
+  const part = cat.part;
 
-  if (part === 'night') {
+  if (cat.state === 'sleep') {
     // 夜里：猫蜷着睡，鸽子把头缩进翅膀，两只都在盘上歇着
-    const ca = 0.32, cr = R * 0.66;
-    const cx2 = G.cx + Math.cos(ca) * cr;
-    const cy2 = G.cy + Math.sin(ca) * ry * (cr / R);
-    drawCat(cx2, cy2, 1.55 * k, 1, now * 1.0, 'sleep');
+    drawCat(cat.x, cat.y, cat.s, cat.dir, cat.ph, 'sleep');
     const da = 2.80, dr = R * 0.64;
     const dx = G.cx + Math.cos(da) * dr;
     const dy = G.cy + Math.sin(da) * ry * (dr / R);
     drawDove(dx, dy, 1.44 * k, -1, now * 0.9, 0, 'sleep');
-    drawZzz(cx2, cy2, k, now);
+    drawZzz(cat.x, cat.y, k, now);
     return;
   }
 
-  // 猫：绕盘缓行；白天换成蹲坐看风景
-  const walkSpeed = part === 'dusk' ? 0.075 : (part === 'dawn' ? 0.045 : 0.05);
-  if (part === 'day') {
-    const ca = 0.32, cr = R * 0.66;
-    const cx2 = G.cx + Math.cos(ca) * cr;
-    const cy2 = G.cy + Math.sin(ca) * ry * (cr / R);
-    drawCat(cx2, cy2, 1.54 * k, 1, now * 1.4, 'loaf');
-  } else {
-    const ca = now * walkSpeed + 0.9;
-    const cr = R * 0.66;
-    const cx2 = G.cx + Math.cos(ca) * cr;
-    const cy2 = G.cy + Math.sin(ca) * ry * (cr / R) * 1.0;
-    const dir = Math.cos(ca + Math.PI / 2) >= 0 ? 1 : -1;
-    const bob = Math.abs(Math.sin(now * 2.4)) * 1.2 * k;
-    drawCat(cx2, cy2 - bob, 1.5 * k, dir, now * 3.1, 'walk');
-  }
+  if (cat.state === 'loaf') drawCat(cat.x, cat.y, cat.s, cat.dir, cat.ph, 'loaf');
+  else drawCat(cat.x, cat.y - cat.bob, cat.s, cat.dir, cat.ph, 'walk');
 
   // 鸽：清晨与黄昏振翅绕行，白天在地面踱步
   const da = now * (part === 'day' ? 0.018 : 0.03) + 5.1;
@@ -1426,10 +1778,40 @@ function drawHub(now) {
   ctx.restore();
 }
 
+/* 光束 = 秒针。默认跟着真实时间走；「加速轮转」时只是视觉上加速，
+   真实时间（表盘下方的数字）完全不受影响。相位 0 指向 12 点。 */
+
+const TURBO_REV = 15;            // 加速轮转：一圈 15 秒
+let beamPhaseNow = 0;            // 当前光束相位 0..TAU
+let beamOffset = 0;              // 叠加在真实秒针上的额外旋转
+
+function realPhase(date) {
+  const d = date || new Date();
+  return TAU * ((d.getSeconds() + d.getMilliseconds() / 1000) / 60);
+}
+
+/* 从当前相位到下一次经过 12 点还要多少秒（加速轮转按 15 秒一圈算） */
+function secondsToTop() {
+  return (1 - beamPhaseNow / TAU) * TURBO_REV;
+}
+
+function updateBeam(dt, now) {
+  const base = realPhase();
+  if (CFG.turbo) {
+    // 每秒比真实秒针多转 (1/15 - 1/60) 圈
+    beamOffset += dt * TAU * (1 / TURBO_REV - 1 / 60);
+  } else if (Math.abs(beamOffset) > 1e-4) {
+    // 关掉加速后用指数衰减追回真实秒针，不会有生硬跳变
+    beamOffset *= Math.exp(-dt * 3.4);
+    if (Math.abs(beamOffset) < 2e-4) beamOffset = 0;
+  }
+  let ph = (base + beamOffset) % TAU;
+  if (ph < 0) ph += TAU;
+  beamPhaseNow = ph;
+}
+
 function beamAngle(now) {
-  const d = new Date();
-  const sec = d.getSeconds() + d.getMilliseconds() / 1000;
-  return -Math.PI / 2 + TAU * (sec / 60);
+  return -Math.PI / 2 + beamPhaseNow;
 }
 
 function drawHands(now) {
@@ -1645,15 +2027,20 @@ function frame(ts) {
 
   introT = Math.min(1, (now - started) / 1.4);
 
+  updateBeam(dt, now);      // 光束（秒针）相位：加速轮转只改它，不改真实时间
   updateSeason(now);
   updateParticles(dt, now);
   updateSky(dt, now);
+  updateFootprints(now);
 
   ctx.clearRect(0, 0, W, H);
 
   drawBaseLayer(now);       // 投影 + 侧壁 + 地面（缓存）
   drawSurfaceFx(now);       // 地表闪光 + 光束光池
+  drawSeasonDeco(now);      // 盘内四季装饰（花 / 荷 / 稻草 / 雪堆 + 猫脚印）
   drawRim(now);
+  drawSnowCap();
+  drawAnimals(now);
   drawSnowCap();
   drawAnimals(now);
   drawHub(now);
@@ -1667,16 +2054,18 @@ function frame(ts) {
 }
 
 function updateSeason(now) {
-  if (!wipe && CFG.seasonMode === 'real') {
+  const period = CFG.turbo ? TURBO_REV : CFG.interval;
+
+  if (!wipe && !CFG.turbo && CFG.seasonMode === 'real') {
     const rs = realSeason();
     if (rs !== season) startWipe(rs, 60, now);
   } else if (!wipe && CFG.seasonMode === 'auto') {
-    if (!nextChangeAt) nextChangeAt = now + 6;
+    if (!nextChangeAt) nextChangeAt = now + (CFG.turbo ? secondsToTop() + 0.02 : 6);
     if (now >= nextChangeAt) {
       const i = ORDER.indexOf(season);
       const nxt = ORDER[(i + 1) % 4];
-      startWipe(nxt, 60, now);
-      nextChangeAt = now + CFG.interval;
+      startWipe(nxt, period, now);
+      nextChangeAt = now + period;
     }
   }
 
@@ -1687,7 +2076,12 @@ function updateSeason(now) {
       wipe = null;
       seedSky();
       pickQuote(season, now);
-      if (CFG.seasonMode === 'auto') nextChangeAt = now + Math.max(30, CFG.interval - 0);
+      seasonT0 = now;
+      initFootprints();
+      if (CFG.seasonMode === 'auto') {
+        // 加速轮转时紧接着下一圈：每一圈 12 点都开始一次换季
+        nextChangeAt = CFG.turbo ? now : now + Math.max(30, CFG.interval);
+      }
     }
   }
 }
@@ -1778,6 +2172,18 @@ const MENU_DEF = [
     title: '季节',
     items: [
       { label: '自动轮转', act: () => { CFG.seasonMode = 'auto'; nextChangeAt = 0; } },
+      {
+        label: '加速轮转', toggle: 'turbo',
+        apply: (v) => {
+          if (v) {
+            // 加速轮转 = 自动轮转的快放：15 秒一圈，每转到 12 点开始换季
+            CFG.seasonMode = 'auto';
+            nextChangeAt = performance.now() / 1000 + secondsToTop() + 0.02;
+          } else {
+            nextChangeAt = 0;
+          }
+        }
+      },
       { label: '跟随真实季节', act: () => { CFG.seasonMode = 'real'; } },
       { label: '定格 · 春', act: () => fixSeason('spring') },
       { label: '定格 · 夏', act: () => fixSeason('summer') },
@@ -1936,6 +2342,7 @@ function boot() {
     }
   }
   if (qp.get('clock') === '0') CFG.showClock = false;
+  if (qp.get('turbo') === '1') { CFG.turbo = true; CFG.seasonMode = 'auto'; }
   const dp = qp.get('part');
   if (dp === 'dawn' || dp === 'day' || dp === 'dusk' || dp === 'night') daypartForce = dp;
 

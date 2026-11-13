@@ -3,6 +3,25 @@
 All notable changes to SeasonDial (四季转盘) are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow SemVer.
 
+## [1.2.0] — 2026-11-13
+
+### Added
+- **Turbo spin (加速轮转)**: new entry in the right-click menu's season group. The golden beam speeds up from one turn per 60 s to one turn per 15 s, and the ground is handed to the next season every time it passes 12 o'clock, so spring → summer → autumn → winter runs past in 15 s. The second-hand speed is purely visual: the hub hands and the clock/date/line underneath still show the real time. Turning it off blends the beam back onto the real second hand (no jump). Selecting turbo also switches the season mode to auto; any fixed mode or "follow the real season" cancels it.
+- **Seasonal decorations that grow inside the disc**: spring flowers with stems and leaves rising out of the grass, summer water lilies floating on the pond with pads and ripples, autumn rice stalks growing tall with ears on top, winter snow drifts piling up in layers. They grow in over ~1.5–1.8 s when a season lands and fade out together with the outgoing ground during the wipe.
+- **Footprints in the snow**: in winter the walking cat leaves a trail of paw prints behind it, alternately offset left and right, fading out over 26 s (about 160 prints at most).
+- `tools/preview_new.js`, `tools/shot_one.js` — offscreen preview renderers used while tuning the decorations.
+- `tools/test_behavior.js` — samples the beam phase and the wipe state through `executeJavaScript` to verify the 15 s period and the "change at 12 o'clock" timing without a GUI.
+- `?turbo=1` query flag to force turbo spin on for debugging.
+
+### Changed
+- Sky particles (petals, leaves, snow, water glints) now fade out with a smoothstep as they drift below the disc, and are recycled at the fade end instead of at the window bottom — no more hard cut-off at the bottom edge.
+- `drawAnimals` now reads a single `catPose(now)` pose, shared with the footprint trail so the prints line up with the cat.
+- README (both languages) and the menu table in the manual document the turbo entry and the new per-season decorations; README screenshots regenerated with the new look.
+- Version bumped to 1.2.0; the portable artefact is now `SeasonDial-1.2.0.exe`.
+
+### Fixed
+- Season decorations stayed invisible while no wipe was running (`wipeProgress()` returns 1 when idle, so the old `1 - wipeProgress()` fade evaluated to 0).
+
 ## [1.1.0] — 2026-11-13
 
 ### Added
@@ -43,4 +62,6 @@ First public release.
 - Right-click menu did not close when clicking outside the window.
 - Third caption line was clipped at the smallest window size.
 
+[1.2.0]: https://github.com/92lyzxx/season-dial/releases/tag/v1.2.0
+[1.1.0]: https://github.com/92lyzxx/season-dial/releases/tag/v1.1.0
 [1.0.0]: https://github.com/92lyzxx/season-dial/releases/tag/v1.0.0
